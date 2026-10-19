@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数字电子技术学习助手</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #f5f6f8; --card: #ffffff; --border: #e4e6ea;
+      --text: #1a1d24; --muted: #6b7280; --accent: #0fdc78; --accent-dark: #0ab861;
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      background: var(--bg); color: var(--text); display: flex; flex-direction: column;
+    }
+    header {
+      background: var(--card); border-bottom: 1px solid var(--border);
+      padding: 12px 20px; display: flex; align-items: center; gap: 12px;
+    }
+    header .logo {
+      width: 34px; height: 34px; border-radius: 8px; background: var(--accent);
+      color: #00331a; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 16px;
+    }
+    header h1 { font-size: 16px; font-weight: 600; }
+    header .sub { font-size: 12px; color: var(--muted); }
+    #kb-status {
+      margin-left: auto; font-size: 12px; color: var(--muted);
+      background: #f0f1f3; border: 1px solid var(--border);
+      padding: 4px 10px; border-radius: 999px;
+    }
+    #kb-status.ok { color: #06793d; background: #e6f9ee; border-color: #b9ecce; }
+    main { flex: 1; overflow-y: auto; padding: 20px; }
+    #chat { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+    .msg { display: flex; gap: 10px; }
+    .msg .avatar {
+      width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;
+    }
+    .msg.user .avatar { background: #e8eaee; }
+    .msg.assistant .avatar { background: var(--accent); color: #00331a; }
+    .msg .body { max-width: 720px; min-width: 0; }
+    .msg .bubble {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 14px; line-height: 1.7; font-size: 14px;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .msg.user .bubble { background: #e8f9ef; border-color: #c9f0da; }
+    .msg .pics { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .msg .pics img {
+      max-width: 260px; max-height: 200px; border-radius: 8px;
+      border: 1px solid var(--border); background: #fff;
+    }
+    .msg .sources {
+      margin-top: 8px; font-size: 12px; color: var(--muted);
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .msg .sources span {
+      background: #f0f1f3; border: 1px solid var(--border);
+      padding: 2px 8px; border-radius: 999px;
+    }
+    .typing { color: var(--muted); font-size: 13px; }
+
+    /* 电路精确分析卡片 */
+    .analysis-card {
+      margin-top: 10px; background: #f8fbf9; border: 1px solid #cdeeda;
+      border-radius: 10px; padding: 12px 14px; font-size: 13px;
+    }
+    .analysis-card .ac-title {
+      font-weight: 700; color: #06793d; margin-bottom: 8px; font-size: 13px;
+    }
+    .analysis-card .ac-expr { margin-bottom: 10px; }
+    .analysis-card .ac-row { display: flex; gap: 6px; margin: 3px 0; }
+    .analysis-card .ac-row .label { color: var(--muted); flex-shrink: 0; }
+    .analysis-card .simp {
+      font-weight: 600; color: #044d2b; font-family: Consolas, Menlo, monospace;
+    }
+    .analysis-card table.tt {
+      border-collapse: collapse; margin: 6px 0; font-size: 12px;
+      font-family: Consolas, Menlo, monospace;
+    }
+    .analysis-card table.tt th, .analysis-card table.tt td {
+      border: 1px solid #cfe8d8; padding: 3px 10px; text-align: center; min-width: 34px;
+    }
+    .analysis-card table.tt th { background: #e6f6ec; color: #0a5c31; }
+    .analysis-card table.tt td.f1 { background: #d9f7e5; font-weight: 700; color: #06793d; }
+    .analysis-card .ac-eq { margin-top: 6px; padding: 8px 10px; border-radius: 8px; }
+    .analysis-card .ac-eq.ok { background: #e6f9ee; border: 1px solid #b9ecce; color: #06793d; }
+    .analysis-card .ac-eq.bad { background: #fdecec; border: 1px solid #f2c4c4; color: #b3261e; }
+    .analysis-card .mint { color: var(--muted); font-size: 12px; }
+
+    footer {
+      background: var(--card); border-top: 1px solid var(--border);
+      padding: 14px 20px;
+    }
+    .input-row { max-width: 820px; margin: 0 auto; display: flex; gap: 10px; align-items: flex-end; }
+    #input {
+      flex: 1; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
+      font-size: 14px; outline: none; resize: none; line-height: 1.5;
+      max-height: 140px;
+    }
+    #input:focus { border-color: var(--accent); }
+    #send {
+      padding: 12px 22px; border: none; border-radius: 10px; background: var(--accent);
+      color: #00331a; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    #send:hover { background: var(--accent-dark); }
+    #send:disabled { opacity: .5; cursor: not-allowed; }
+    #attach-btn {
+      width: 42px; height: 42px; border: 1px solid var(--border); border-radius: 10px;
+      background: #fff; font-size: 18px; cursor: pointer; color: var(--muted);
+      flex-shrink: 0;
+    }
+    #attach-btn:hover { border-color: var(--accent); color: var(--accent-dark); }
+    .attach-bar {
+      max-width: 820px; margin: 0 auto 8px; display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .attach-item {
+      position: relative; width: 64px; height: 64px; border-radius: 8px;
+      border: 1px solid var(--border); overflow: hidden; background: #fff;
+    }
+    .attach-item img { width: 100%; height: 100%; object-fit: cover; }
+    .attach-item .del {
+      position: absolute; top: 2px; right: 2px; width: 18px; height: 18px;
+      border-radius: 50%; background: rgba(0,0,0,.55); color: #fff; border: none;
+      font-size: 12px; line-height: 1; cursor: pointer;
+    }
+    .attach-item .loading {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,.85); font-size: 11px; color: var(--muted);
+    }
+    .hint { max-width: 820px; margin: 8px auto 0; font-size: 12px; color: var(--muted); text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">数</div>
+    <div>
+      <h1>数字电子技术学习助手</h1>
+      <div class="sub">基于 DeepSeek + RAG 知识库 · 电路精确分析 · 图片识别</div>
+    </div>
+    <span id="kb-status">知识库加载中…</span>
+  </header>
+
+  <main>
+    <div id="chat"></div>
+  </main>
+
+  <footer>
+    <div id="attach-bar" class="attach-bar"></div>
+    <div class="input-row">
+      <button id="attach-btn" title="上传图片（电路截图/手绘图/作业照片）">＋</button>
+      <textarea id="input" rows="1" placeholder="输入问题，例如：化简 F=AB+A'C；或问我 JK 触发器特性方程；也可上传电路图让我分析"></textarea>
+      <button id="send">发送</button>
+    </div>
+    <div class="hint">Enter 发送 · Shift+Enter 换行 · 上传图片后可让它读电路图/作业照片</div>
+    <input type="file" id="file-input" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+  </footer>
+
+  <script>
+    const chatEl = document.getElementById('chat');
+    const inputEl = document.getElementById('input');
+    const sendBtn = document.getElementById('send');
+    const kbStatus = document.getElementById('kb-status');
+    const fileInput = document.getElementById('file-input');
+    const attachBtn = document.getElementById('attach-btn');
+    const attachBar = document.getElementById('attach-bar');
+    const history = [];
+    const attachments = [];  // {id, localUrl, remoteUrl, name, status}
+    let attachSeq = 0;
+
+    // 知识库状态
+    fetch('/api/health').then(r => r.json()).then(d => {
+      kbStatus.textContent = `知识库已加载 ${d.kb_chunks} 个分块`;
+      kbStatus.classList.add('ok');
+    }).catch(() => {
+      kbStatus.textContent = '知识库状态未知';
+    });
+
+    // ---------- 图片上传 ----------
+    attachBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', async () => {
+      const src = fileInput.files[0];
+      fileInput.value = '';
+      if (!src) return;
+      const att = { id: 'att' + (++attachSeq), localUrl: URL.createObjectURL(src),
+                    remoteUrl: null, name: src.name, status: 'uploading' };
+      attachments.push(att);
+      renderAttachments();
+      try {
+        // 大照片先压缩到最长边 1600px，小字更清晰、上传更快，识别更准
+        const file = await compressImage(src);
+        const fd = new FormData();
+        fd.append('file', file);
+        const resp = await fetch('/api/upload', { method: 'POST', body: fd });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.detail || '上传失败');
+        att.remoteUrl = data.url;
+        att.status = 'done';
+      } catch (e) {
+        att.status = 'error';
+        alert('图片上传失败：' + e.message);
+      }
+      renderAttachments();
+    });
+
+    function compressImage(file, maxSide = 1600) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+          if (scale === 1 && file.size < 5 * 1024 * 1024) { resolve(file); return; }
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          const type = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+          canvas.toBlob(b => resolve(b || file), type, 0.92);
+        };
+        img.onerror = () => resolve(file);
+        img.src = URL.createObjectURL(file);
+      });
+    }
+
+    function renderAttachments() {
+      attachBar.innerHTML = '';
+      attachments.forEach(att => {
+        const el = document.createElement('div');
+        el.className = 'attach-item';
+        el.innerHTML = `<img src="${att.localUrl}" alt="${att.name}">` +
+          (att.status === 'uploading' ? '<div class="loading">上传中…</div>' : '') +
+          `<button class="del" data-id="${att.id}">×</button>`;
+        attachBar.appendChild(el);
+      });
+      attachBar.querySelectorAll('.del').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = attachments.findIndex(a => a.id === btn.dataset.id);
+          if (idx >= 0) attachments.splice(idx, 1);
+          renderAttachments();
+        });
+      });
+    }
+
+    // ---------- 消息渲染 ----------
+    function addMessage(role, text, sources, images, analysis) {
+      const wrap = document.createElement('div');
+      wrap.className = 'msg ' + role;
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.textContent = role === 'user' ? '我' : '助';
+      const body = document.createElement('div');
+      body.className = 'body';
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = text;
+      body.appendChild(bubble);
+
+      if (images && images.length) {
+        const pics = document.createElement('div');
+        pics.className = 'pics';
+        images.forEach(u => {
+          const img = document.createElement('img');
+          img.src = u;
+          pics.appendChild(img);
+        });
+        body.appendChild(pics);
+      }
+
+      if (analysis) renderAnalysis(body, analysis);
+
+      if (sources && sources.length) {
+        const src = document.createElement('div');
+        src.className = 'sources';
+        src.innerHTML = '参考资料：' + sources.map(s =>
+          `<span>${s.title} · ${s.section}</span>`).join('');
+        body.appendChild(src);
+      }
+
+      wrap.appendChild(avatar);
+      wrap.appendChild(body);
+      chatEl.appendChild(wrap);
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    function pretty(expr) {
+      return expr.replace(/\s*&\s*/g, '·').replace(/\s*\|\s*/g, ' + ').replace(/~/g, '非');
+    }
+
+    function renderAnalysis(body, analysis) {
+      const card = document.createElement('div');
+      card.className = 'analysis-card';
+      let html = '<div class="ac-title">电路精确分析（sympy 计算结果）</div>';
+
+      analysis.expressions.forEach(e => {
+        html += `<div class="ac-expr">
+          <div class="ac-row"><span class="label">原表达式</span><span>${e.expr_str}</span></div>
+          <div class="ac-row"><span class="label">最简式</span><span class="simp">${pretty(e.simplified)}</span></div>
+          <div class="ac-row"><span class="label">变量</span><span>${e.variables.join('、')}（${e.n_rows} 种组合）</span></div>`;
+        if (e.minterms.length) {
+          html += `<div class="ac-row mint"><span class="label">F=1 的最小项</span><span>m${e.minterms.join(', m')}</span></div>`;
+        }
+        html += `<table class="tt"><thead><tr>`;
+        e.variables.forEach(v => { html += `<th>${v}</th>`; });
+        html += `<th>F</th></tr></thead><tbody>`;
+        e.truth_table.forEach(row => {
+          html += '<tr>';
+          e.variables.forEach(v => { html += `<td>${row.inputs[v]}</td>`; });
+          html += `<td class="${row.f ? 'f1' : ''}">${row.f}</td></tr>`;
+        });
+        html += '</tbody></table></div>';
+      });
+
+      const eq = analysis.equivalence;
+      if (eq) {
+        if (eq.equivalent) {
+          html += `<div class="ac-eq ok">✓ 两个表达式等价：${pretty(eq.left)} ≡ ${pretty(eq.right)}</div>`;
+        } else {
+          const c = eq.counterexample || {};
+          const cStr = Object.entries(c).map(([k, v]) => `${k}=${v}`).join('，');
+          html += `<div class="ac-eq bad">✗ 两个表达式不等价！反例：${cStr} 时两式输出不同（原式最简 ${pretty(eq.left)}，你的结果 ${pretty(eq.right)}）</div>`;
+        }
+      }
+      card.innerHTML = html;
+      body.appendChild(card);
+    }
+
+    function addTyping() {
+      const el = document.createElement('div');
+      el.className = 'msg assistant';
+      el.innerHTML = '<div class="avatar">助</div><div class="body"><div class="typing">正在思考…</div></div>';
+      chatEl.appendChild(el);
+      chatEl.scrollTop = chatEl.scrollHeight;
+      return el;
+    }
+
+    // ---------- 发送 ----------
+    async function send() {
+      let text = inputEl.value.trim();
+      const images = attachments.filter(a => a.remoteUrl).map(a => a.remoteUrl);
+      if (!text && !images.length) return;
+      if (!text) text = '请分析这张图片中的电路，说明它的功能或指出其中的错误。';
+
+      // 未上传完成的图片不允许发送
+      if (attachments.some(a => a.status !== 'done')) {
+        alert('有图片仍在上传中，请稍候');
+        return;
+      }
+
+      inputEl.value = '';
+      autoGrow();
+      addMessage('user', text, null, images);
+      history.push({ role: 'user', content: text + (images.length ? '（附图片）' : '') });
+      attachments.splice(0, attachments.length);
+      renderAttachments();
+
+      const typingEl = addTyping();
+      sendBtn.disabled = true;
+      try {
+        const resp = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, history, images })
+        });
+        const data = await resp.json();
+        typingEl.remove();
+        if (!resp.ok) throw new Error(data.detail || '请求失败');
+        addMessage('assistant', data.reply, data.sources, null, data.analysis || null);
+        history.push({ role: 'assistant', content: data.reply });
+      } catch (e) {
+        typingEl.remove();
+        addMessage('assistant', '出错了：' + e.message);
+      } finally {
+        sendBtn.disabled = false;
+        inputEl.focus();
+      }
+    }
+
+    function autoGrow() {
+      inputEl.style.height = 'auto';
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+    }
+    inputEl.addEventListener('input', autoGrow);
+    inputEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+    });
+    sendBtn.addEventListener('click', send);
+
+    addMessage('assistant',
+      '你好！我是数字电子技术学习助手。\n' +
+      '我可以：\n' +
+      '· 精确化简逻辑表达式、生成真值表（如：化简 F=AB+A\'C）\n' +
+      '· 检查化简是否等价、定位错误（如：AB+A\'C 和 B(A+C) 等价吗？）\n' +
+      '· 上传电路截图 / 手绘图 / 作业照片，让我看图分析\n' +
+      '· 回答数制、逻辑代数、组合/时序电路、555 定时器等问题');
+  </script>
+</body>
+</html>

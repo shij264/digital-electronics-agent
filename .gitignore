@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+data/kb_cache.pkl
+data/uploads/
+
+# 文档（不推代码仓库）
+*.docx
+*.pptx
+*.log
+~$*
+
+# 本地工具截图
+ppt_shots/
